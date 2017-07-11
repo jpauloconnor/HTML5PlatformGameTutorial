@@ -1,21 +1,42 @@
+// =============================================================================
+// sprites
+// =============================================================================
+
+//
+// hero sprite
+//
+
 function Hero(game, x, y) {
     // call Phaser.Sprite constructor
     Phaser.Sprite.call(this, game, x, y, 'hero');
+ 
+ 	//Set the start position for the hero
     this.anchor.set(0.5, 0.5);
 }
 
 // inherit from Phaser.Sprite
 Hero.prototype = Object.create(Phaser.Sprite.prototype);
 Hero.prototype.constructor = Hero;
+
+Hero.prototype.move = function(direction){
+	this.x += direction * 2.5 //2.5 pixels each frame
+}
+
+
+// =============================================================================
+// game states
+// =============================================================================
+
 PlayState = {};
 
-//sets 960 x 600 game size.
-//also connects with the "game" id
-window.onload = function () {
-    let game = new Phaser.Game(960, 600, Phaser.AUTO, 'game');
-    game.state.add('play', PlayState);
-    game.state.start('play');
-};
+PlayState.init = function(){
+
+	//Handles the LEFT and Right Keys
+	this.keys = this.game.input.keyboard.addKeys({
+		left: Phaser.KeyCode.LEFT,
+		right: Phaser.KeyCode.RIGHT
+	});
+}
 
 PlayState.preload = function () {
 	this.game.load.json('level:1', 'data/level01.json');
@@ -31,10 +52,26 @@ PlayState.preload = function () {
 };
 
 
+
 // create game entities and set up world here
 PlayState.create = function () {
     this.game.add.image(0, 0, 'background');
     this._loadLevel(this.game.cache.getJSON('level:1'));
+};
+
+PlayState.update = function () {
+    this._handleInput();
+};
+
+//Function to handle input. If left is pressed, move the character -1
+//If right is pressed, move the character -1.
+PlayState._handleInput = function () {
+    if (this.keys.left.isDown) { // move hero left
+        this.hero.move(-5);
+    }
+    else if (this.keys.right.isDown) { // move hero right
+        this.hero.move(1);
+    }
 };
 
 //Load levels
@@ -59,3 +96,20 @@ PlayState._spawnCharacters = function (data) {
 PlayState._spawnPlatform = function (platform) {
     this.game.add.sprite(platform.x, platform.y, platform.image);
 };
+
+
+
+// =============================================================================
+// entry point
+// =============================================================================
+
+//sets 960 x 600 game size.
+//also connects with the "game" id
+window.onload = function () {
+    let game = new Phaser.Game(960, 600, Phaser.AUTO, 'game');
+    game.state.add('play', PlayState);
+    game.state.start('play');
+};
+
+
+
