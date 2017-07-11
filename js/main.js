@@ -40,6 +40,10 @@ Hero.prototype.jump = function () {
     return canJump;
 };
 
+Hero.prototype.bounce = function () {
+    const BOUNCE_SPEED = 200;
+    this.body.velocity.y = -BOUNCE_SPEED;
+};
 
 // spider
 
@@ -50,6 +54,7 @@ function Spider(game, x, y) {
     this.anchor.set(0.5);
     // animation
     this.animations.add('crawl', [0, 1, 2], 8, true);
+    this.animations.add('die', [0, 4, 0, 4, 0, 4, 3, 3, 3, 3, 3, 3], 12);
     this.animations.add('die', [0, 4, 0, 4, 0, 4, 3, 3, 3, 3, 3, 3], 12);
     this.animations.play('crawl');
 
@@ -76,6 +81,15 @@ Spider.prototype.update = function () {
         this.body.velocity.x = Spider.SPEED; // turn right
     }
 };
+
+Spider.prototype.die = function () {
+    this.body.enable = false;
+
+    this.animations.play('die').onComplete.addOnce(function () {
+        this.kill();
+    }, this);
+};
+
 
 // =============================================================================
 // game states
@@ -126,7 +140,8 @@ PlayState.create = function () {
 	// create sound entities
     this.sfx = {
         jump: this.game.add.audio('sfx:jump'),
-        coin: this.game.add.audio('sfx:coin')
+        coin: this.game.add.audio('sfx:coin'),
+        stomp: this.game.add.audio('sfx:stomp')
     };
     this.game.add.image(0, 0, 'background');
     this._loadLevel(this.game.cache.getJSON('level:1'));
@@ -147,6 +162,8 @@ PlayState._handleCollisions = function () {
     //collision of coin and hero
     //null would allow us to filter
     this.game.physics.arcade.overlap(this.hero, this.coins, this._onHeroVsCoin, null, this);
+	this.game.physics.arcade.overlap(this.hero, this.spiders,
+        this._onHeroVsEnemy, null, this);
 
 };
 
@@ -230,7 +247,7 @@ PlayState._spawnCoin = function (coin) {
     let sprite = this.coins.create(coin.x, coin.y, 'coin');
     sprite.anchor.set(0.5, 0.5);
 
-    sprite.animations.add('rotate', [0,1,2,1], 6, true);
+    sprite.animations.add('rotate', [0,1,2,1], 12, true);
     sprite.animations.play('rotate');
 
     //What happens if we set the gravity to true?
@@ -247,7 +264,17 @@ PlayState._onHeroVsCoin = function (hero, coin) {
 };
 
 
-
+PlayState._onHeroVsEnemy = function (hero, enemy) {
+     if (hero.body.velocity.y > 0) { // kill enemies when hero is falling
+        hero.bounce();
+        enemy.die();
+        this.sfx.stomp.play();
+    }
+    else { // game over -> restart the game
+        this.sfx.stomp.play();
+        this.game.state.restart();
+    }
+};
 
 
 // =============================================================================
