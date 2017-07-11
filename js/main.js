@@ -66,7 +66,12 @@ PlayState.create = function () {
 };
 
 PlayState.update = function () {
+    this._handleCollisions();
     this._handleInput();
+};
+
+PlayState._handleCollisions = function () {
+    this.game.physics.arcade.collide(this.hero, this.platforms);
 };
 
 //Function to handle input. If left is pressed, move the character -1
@@ -85,6 +90,10 @@ PlayState._handleInput = function () {
 
 //Load levels
 PlayState._loadLevel = function (data) {
+
+	//create all the groups/layers that we need
+	this.platforms = this.game.add.group();
+
 	console.log(data);
 	//spawn all platforms
     data.platforms.forEach(this._spawnPlatform, this);
@@ -92,6 +101,24 @@ PlayState._loadLevel = function (data) {
     //spawn hero and enemies
     this._spawnCharacters({hero: data.hero});
 
+    //enable gravity
+    const GRAVITY = 1200;
+    this.game.physics.arcade.gravity.y = GRAVITY;
+};
+
+
+
+
+
+
+PlayState._spawnPlatform = function (platform) {
+    let sprite = this.platforms.create(
+        platform.x, platform.y, platform.image);
+
+    this.game.physics.enable(sprite);
+
+    sprite.body.allowGravity = false;
+    sprite.body.immovable = true;
 };
 
 PlayState._spawnCharacters = function (data) {
@@ -99,14 +126,6 @@ PlayState._spawnCharacters = function (data) {
     this.hero = new Hero(this.game, data.hero.x, data.hero.y);
     this.game.add.existing(this.hero);
 };
-
-
-
-PlayState._spawnPlatform = function (platform) {
-    this.game.add.sprite(platform.x, platform.y, platform.image);
-};
-
-
 
 // =============================================================================
 // entry point
