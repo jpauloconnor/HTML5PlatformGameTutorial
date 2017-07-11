@@ -65,14 +65,20 @@ PlayState.update = function () {
 
 //Function to handle input. If left is pressed, move the character -1
 //If right is pressed, move the character -1.
+//Try change the value to -5 or something different
 PlayState._handleInput = function () {
     if (this.keys.left.isDown) { // move hero left
-        this.hero.move(-5);
+        this.hero.move(-1);
     }
     else if (this.keys.right.isDown) { // move hero right
         this.hero.move(1);
     }
 };
+
+
+// =============================================================================
+// game states -- Loading
+// =============================================================================
 
 //Load levels
 PlayState._loadLevel = function (data) {
