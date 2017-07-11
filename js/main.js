@@ -76,6 +76,8 @@ PlayState.preload = function () {
     this.game.load.image('grass:1x1', 'images/grass_1x1.png');
 	this.game.load.image('hero', 'images/hero_stopped.png');
     this.game.load.audio('sfx:jump', 'audio/jump.wav');
+    this.game.load.spritesheet('coin', 'images/coin_animated.png', 22, 22);
+    this.game.load.audio('sfx:coin', 'audio/coin.wav');
 
 };
 
@@ -85,7 +87,8 @@ PlayState.preload = function () {
 PlayState.create = function () {
 	// create sound entities
     this.sfx = {
-        jump: this.game.add.audio('sfx:jump')
+        jump: this.game.add.audio('sfx:jump'),
+        coin: this.game.add.audio('sfx:coin')
     };
     this.game.add.image(0, 0, 'background');
     this._loadLevel(this.game.cache.getJSON('level:1'));
@@ -100,6 +103,11 @@ PlayState.update = function () {
 
 PlayState._handleCollisions = function () {
     this.game.physics.arcade.collide(this.hero, this.platforms);
+
+    //collision of coin and hero
+    //null would allow us to filter
+    this.game.physics.arcade.overlap(this.hero, this.coins, this._onHeroVsCoin, null, this);
+
 };
 
 //Function to handle input. If left is pressed, move the character -1
@@ -121,13 +129,15 @@ PlayState._loadLevel = function (data) {
 
 	//create all the groups/layers that we need
 	this.platforms = this.game.add.group();
+	this.coins = this.game.add.group();
 
 	console.log(data);
 	//spawn all platforms
     data.platforms.forEach(this._spawnPlatform, this);
 
     //spawn hero and enemies
-    this._spawnCharacters({hero: data.hero});
+    this._spawnCharacters({hero: data.hero, spiders: data.spiders});
+    data.coins.forEach(this._spawnCoin, this);
 
     //enable gravity
     const GRAVITY = 1200;
@@ -154,6 +164,30 @@ PlayState._spawnCharacters = function (data) {
     this.hero = new Hero(this.game, data.hero.x, data.hero.y);
     this.game.add.existing(this.hero);
 };
+
+PlayState._spawnCoin = function (coin) {
+    let sprite = this.coins.create(coin.x, coin.y, 'coin');
+    sprite.anchor.set(0.5, 0.5);
+
+    sprite.animations.add('rotate', [0,1,2,1], 6, true);
+    sprite.animations.play('rotate');
+
+    //What happens if we set the gravity to true?
+    this.game.physics.enable(sprite);
+  	sprite.body.allowGravity = false;
+};
+
+PlayState._onHeroVsCoin = function (hero, coin) {
+	//Make the noise upon collision
+	this.sfx.coin.play();
+
+	//Make the coin go away.
+    coin.kill();
+};
+
+
+
+
 
 // =============================================================================
 // entry point
